@@ -1,0 +1,19 @@
+name: Mirror RPCS3
+on:
+  schedule:
+    - cron: '0 12 * * *'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download and Mirror Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          DOWNLOAD_URL=$(curl -s https://api.github.com/repos/RPCS3/rpcs3-binaries-linux/releases | jq -r '.[0].assets[] | select(.name | endswith(".AppImage")) | .browser_download_url' | head -n 1)
+          curl -L -o rpcs3-latest.AppImage "$DOWNLOAD_URL"
+          TAG="v$(date +'%Y.%m.%d-%H%M')"
+          gh release create "$TAG" rpcs3-latest.AppImage --title "RPCS3 Build $TAG" --notes "Automated daily mirror."
